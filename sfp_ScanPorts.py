@@ -10,13 +10,13 @@
 # Licence:     GPL
 # -------------------------------------------------------------------------------
 
-import re
-import json
-# from urllib2
-import urlopen
+#import re
+#import json
+from urllib.request import urlopen
 from netaddr import IPNetwork
 from spiderfoot import SpiderFootEvent, SpiderFootPlugin
 import nmap
+import sys
 
 
 class sfp_new_module(SpiderFootPlugin):
@@ -104,40 +104,44 @@ class sfp_new_module(SpiderFootPlugin):
         ####################################
         #      Insert here the code        #
         ####################################
-
-# Obtener geolocalizacion de una IP
-def ipInfo(addr=""):
-    if addr == "":
-        url = "https://ipinfo.io/json"
-    else:
-        url = "https://ipinfo.io/" + addr + "/json"
-    response = urlopen(url)
-    data = json.load(response)
-    print("addr %s: %s\n" % (addr, data))
-ipInfo()
-ipInfo("No sea introducido IP")
-
-# Escanear vulnerabilidades
-ip = input("[+] IP Objetivo ==> ")
-nm = nmap.PortScanner()
-puertos_abiertos = "-p "
-results = nm.scan(hosts=ip, arguments="-sT -n -Pn -T4")
-count = 0
-#print (results)
-print("\nHost : %s" % ip)
-print("State : %s" % nm[ip].state())
-for proto in nm[ip].all_protocols():
-    print("Protocol : %s" % proto)
-    print()
-    lport = nm[ip][proto].keys()
-    sorted(lport)
-    for port in lport:
-        print("port : %s\tstate : %s" % (port, nm[ip][proto][port]["state"]))
-        if count == 0:
-            puertos_abiertos = puertos_abiertos+str(port)
-            count = 1
-        else:
-            puertos_abiertos = puertos_abiertos+","+str(port)
-
-print("\nPuertos abiertos: " + puertos_abiertos + " "+str(ip))
+        
+        #Localizar IP
+        try:
+            #Pegando ip informado como argumento.
+            ip=sys.argv[1]
+            if ip:
+                #URL do apt
+                url=f"http://ip-api.com/json/{ip}"
+                #Iniciandoorequest
+                request=urlopen(url)
+                data=request.read().decode()
+                #Convertendo string api,pora DICT(Dicionário)
+                data=eval(data)
+                for i in data:
+                    print(f"(i)(data[1])")
+        except Exception as ex:
+            print("Error:(ex)")
+        
+        # Escanear vulnerabilidades
+        ip = input("[+] IP Objetivo ==> ")
+        nm = nmap.PortScanner()
+        puertos_abiertos = "-p "
+        results = nm.scan(hosts=ip, arguments="-sT -n -Pn -T4")
+        count = 0
+        #print (results)
+        print("\nHost : %s" % ip)
+        print("State : %s" % nm[ip].state())
+        for proto in nm[ip].all_protocols():
+            print("Protocol : %s" % proto)
+            print()
+            lport = nm[ip][proto].keys()
+            sorted(lport)
+            for port in lport:
+                print("port : %s\tstate : %s" % (port, nm[ip][proto][port]["state"]))
+                if count == 0:
+                    puertos_abiertos = puertos_abiertos+str(port)
+                    count = 1
+                else:
+                    puertos_abiertos = puertos_abiertos+","+str(port)
+            print("\nPuertos abiertos: " + puertos_abiertos + " "+str(ip))
 # fim
